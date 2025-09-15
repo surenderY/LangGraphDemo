@@ -2,6 +2,7 @@ from langchain.chat_models import init_chat_model
 from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, ToolMessage, AIMessage
 from typing import TypedDict, Annotated
 from langgraph.graph import StateGraph, END
+from dotenv import load_dotenv
 import operator
 import uuid
 import functools
@@ -114,9 +115,11 @@ if __name__ == "__main__":
     print("\n#################################################")
     print("     Welcome to HC Order status application")
     print("#################################################\n")
+    load_dotenv()  # Load environment variables from .env file
 
-    os.environ["OPENAI_API_KEY"] = ""    
-    model = init_chat_model("openai:gpt-5-mini")
+    os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+    llm_model = os.getenv("LLM_MODEL")
+    model = init_chat_model(llm_model)
 
     orders_agent = OrdersAgent(model, 
                            [get_order_details, update_quantity], 
@@ -133,15 +136,14 @@ if __name__ == "__main__":
     router_prompt = """ 
         You are a Router, that analyzes the input query and chooses 4 options:
         SMALLTALK: If the user input is small talk, like greetings and good byes.
-        PRODUCT: If the query is a product question about laptops, like features, specifications and pricing.
         ORDER: If the query is about orders for laptops, like order status, order details or update order quantity
-        END: Default, when its neither PRODUCT or ORDER.
+        END: Default, its ORDER.
 
-        The output should only be just one word out of the possible 4 : SMALLTALK, PRODUCT, ORDER, END.
+        The output should only be just one word out of the possible 4 : SMALLTALK, ORDER, END.
         """
 
     smalltalk_prompt = """
-        If the user request is small talk, like greetings and goodbyes, respond professionally.
+        If the user request is small talk, like weather, greetings and goodbyes, respond professionally.
         Mention that you will be able to answer questions about laptop product features and provide order status and updates.
         """
 
@@ -156,20 +158,18 @@ if __name__ == "__main__":
     config = {"configurable": {"thread_id": str(uuid.uuid4())}}
 
     #Execute a single request
-    # messages=[HumanMessage(content="Tell me about the features of SpectraBook")]
+    # "Tell me about the features of SpectraBook"c
+    # messages=[HumanMessage(content="How are you doing?")]
     # result = router_agent.router_graph.invoke({"messages":messages}, config)
     # for message in result['messages']:
     #     print(message.pretty_repr())
 
-    
-    #Send a sequence of messages to chatbot and get its response
-    #This simulates the conversation between the user and the Agentic chatbot
     user_inputs = [
         "How are you doing?",
+        "what is the weather in NOVI, Michigan?",
         "Please show me the details of the order ORD-7311",
-        "Can you add one more of that laptop to the order? ",
-        "Tell me about the features of SpectraBook laptop",
-        "How much does it cost?",
+        # "Can you add one more of that laptop to the order? ",
+        # "Please show me the details of the order ORD-7311",
         "Bye"
     ]
 

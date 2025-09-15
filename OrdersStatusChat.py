@@ -4,6 +4,7 @@ from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 from typing import TypedDict, Annotated
 from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, ToolMessage
+from dotenv import load_dotenv
 # from IPython.display import Image
 import operator
 import json
@@ -12,8 +13,10 @@ import pandas as pd
 import os
 
 
-os.environ["OPENAI_API_KEY"] = ""
-model = init_chat_model("openai:gpt-5-mini")
+load_dotenv()
+os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+llm_model = os.getenv("LLM_MODEL")
+model = init_chat_model(llm_model)
 
 
 #Load the laptop product orders CSV into a Pandas dataframe.
@@ -59,11 +62,6 @@ def update_quantity(order_id:str, new_quantity:int) -> bool :
                 "Quantity Ordered"] = new_quantity
         return True
 
-# Test the tool. Before running the test, comment the @tool annotation
-# print(get_order_details("ORD-6948"))
-# print(update_quantity("ORD-6948", 4))
-# print(product_orders_df)
-
 
 #An Agent State class that keep state of the agent while it answers a query
 class OrdersAgentState(TypedDict):
@@ -79,7 +77,6 @@ class OrdersAgent:
         self.system_prompt=system_prompt
         self.debug=debug
 
-        #Setup the graph for the agent manually
         agent_graph=StateGraph(OrdersAgentState)
         agent_graph.add_node("orders_llm",self.call_llm)
         agent_graph.add_node("orders_tools",self.call_tools)
@@ -89,20 +86,16 @@ class OrdersAgent:
             {True: "orders_tools", False: END }
         )
         agent_graph.add_edge("orders_tools","orders_llm")
-        #Set where there graph starts
         agent_graph.set_entry_point("orders_llm")
 
         #Add chat memory
         self.memory=MemorySaver()
-        #compile the graph
         self.agent_graph = agent_graph.compile(checkpointer=self.memory)
 
-        #Setup tools
         self.tools = { tool.name : tool for tool in tools }
         if self.debug:
             print("\nTools loaded :", self.tools)
             
-        #attach tools to model
         self.model=model.bind_tools(tools)
 
 
@@ -146,7 +139,6 @@ class OrdersAgent:
                 print(f"Unknown tool name {tool}")
                 result = "Invalid tool found. Please retry"
             else:
-                #Call the tool and collect results
                 result=self.tools[tool["name"]].invoke(tool["args"])
 
             #append results to the list of tool results
@@ -156,12 +148,8 @@ class OrdersAgent:
 
             if self.debug:
                 print(f"\nTools returned {results}")
-            #return tool results
             return { "messages" : results }
 
-
-#-----------------------------------------------------------------------------
-#Setup the custom agent
 
 #Note that this is a string, since the model init only accepts a string.
 system_prompt = """
@@ -170,12 +158,6 @@ system_prompt = """
     Do NOT reveal information about other orders than the one requested.
     You will handle small talk and greetings by producing professional responses.
     """
-
-#Create the custom orders agent
-# orders_agent = OrdersAgent(model, 
-#                            [get_order_details, update_quantity], 
-#                            system_prompt,
-#                            debug=False)
 
 #Visualize the Agent
 # Image(orders_agent.agent_graph.get_graph().draw_mermaid_png())

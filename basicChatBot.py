@@ -5,14 +5,17 @@ import openai
 from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
-
+from dotenv import load_dotenv
 import json
 from langchain_core.messages import ToolMessage
-
 import os
 
-os.environ["OPENAI_API_KEY"] = ""
-llm = init_chat_model("openai:gpt-5-mini")
+
+load_dotenv()
+os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+os.environ["TAVILY_API_KEY"] = os.getenv("TAVILY_API_KEY")
+llm_model = os.getenv("LLM_MODEL")
+llm = init_chat_model(llm_model)
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
@@ -20,13 +23,9 @@ class State(TypedDict):
 graph_builder = StateGraph(State)
 
 
-#  https://app.tavily.com/billing
-TAVILY_API_KEY = "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"
-os.environ["TAVILY_API_KEY"] = TAVILY_API_KEY
 tool = TavilySearch(max_results=2)
 tools = [tool]
 # tool.invoke("What's a 'node' in LangGraph?")
-# Modification: tell the LLM which tools it can call
 llm_with_tools = llm.bind_tools(tools)
 
 def chatbot(state: State):
@@ -39,9 +38,6 @@ def chatbot(state: State):
     
 graph_builder.add_node("chatbot", chatbot)
 
-
-import json
-from langchain_core.messages import ToolMessage
 
 class BasicToolNode:
     """A node that runs the tools requested in the last AIMessage."""
@@ -107,7 +103,6 @@ graph = graph_builder.compile()
 
 
 # from IPython.display import Image, display
-
 # try:
 #     display(Image(graph.get_graph().draw_mermaid_png()))
 # except Exception:
@@ -118,11 +113,15 @@ def stream_graph_updates(user_input: str):
     try:
         for event in graph.stream({"messages": [{"role": "user", "content": user_input}]}):
             for value in event.values():
-                print("Assistant:", value["messages"][-1].content)
+                print("\nAssistant : ", value["messages"][-1].content)
     except openai.RateLimitError as e:
         print("OpenAI API quota exceeded. Please check your plan and billing details.")
         print(f"Error details: {e}")
 
 
-
-stream_graph_updates("How is the weather in NOVI, Michigan?")
+while True:
+    user_input = input("\nUser: ")
+    if user_input.lower() in ["exit", "quit"]:
+        print("Exiting the chat. Goodbye!")
+        break
+    stream_graph_updates(user_input)
