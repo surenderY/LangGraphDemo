@@ -112,19 +112,17 @@ def agent_node(state, agent, name, config):
 
 if __name__ == "__main__":
 
-    print("\n#################################################")
-    print("     Welcome to HC Order status application")
-    print("#################################################\n")
-    load_dotenv()  # Load environment variables from .env file
-
-    os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+    print("\n#####################################################")
+    print("     Welcome to HC Order status chatbot application")
+    print("#####################################################\n")
+    load_dotenv()
     llm_model = os.getenv("LLM_MODEL")
     model = init_chat_model(llm_model)
 
     orders_agent = OrdersAgent(model, 
                            [get_order_details, update_quantity], 
                            system_prompt,
-                           debug=False)
+                           debug=True)
     
     #Create the Orders node
     #For a custom agent, the agent graph need to be provided as input
@@ -150,7 +148,7 @@ if __name__ == "__main__":
     router_agent = RouterAgent(model, 
                             router_prompt, 
                             smalltalk_prompt,
-                            debug=False)
+                            debug=True)
     
     # Image(router_agent.router_graph.get_graph().draw_mermaid_png())
 
@@ -165,12 +163,12 @@ if __name__ == "__main__":
     #     print(message.pretty_repr())
 
     user_inputs = [
-        "How are you doing?",
-        "what is the weather in NOVI, Michigan?",
+        # "How are you doing?",
+        # "what is the weather in NOVI, Michigan?",
         "Please show me the details of the order ORD-7311",
         # "Can you add one more of that laptop to the order? ",
         # "Please show me the details of the order ORD-7311",
-        "Bye"
+        # "Bye"
     ]
 
     for input in user_inputs:

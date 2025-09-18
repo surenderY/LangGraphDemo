@@ -3,18 +3,15 @@ from langchain_core.tools import tool
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 from typing import TypedDict, Annotated
-from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, ToolMessage
+from langchain_core.messages import AnyMessage, SystemMessage, ToolMessage
 from dotenv import load_dotenv
 # from IPython.display import Image
 import operator
-import json
-
 import pandas as pd
 import os
 
 
 load_dotenv()
-os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 llm_model = os.getenv("LLM_MODEL")
 model = init_chat_model(llm_model)
 
