@@ -24,7 +24,7 @@
 		- Conditional routing between nodes based on tool usage requirements
 		- Defined flow from START → chatbot → (tools) → chatbot → END
 
-        ![HCOrderStatus Agent LangGraph](/data/hcorderstatus.png "HCOrderStatus Agent LangGraph")
+        ![HCOrderStatus Agent LangGraph](https://github.com/surenderY/LangGraphDemo/blob/a73e2a376437a25973a7e81eb8572e9d61139a72/data/hcorderstatus.png "HCOrderStatus Agent LangGraph")
 	
 	Tool Integration:
 
